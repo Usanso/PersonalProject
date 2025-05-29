@@ -16,7 +16,7 @@ public class RobotController : MonoBehaviour
 
     [Header("이동 설정")]
     [SerializeField] private float moveSpeed = 8f;
-    [SerializeField] private float acceleration = 20f; // 가속도
+
     [SerializeField] private float deceleration = 15f; // 감속도
     [SerializeField] private float rotationSpeed = 360f;
     [SerializeField] private float rotationAcceleration = 720f; // 회전 가속도

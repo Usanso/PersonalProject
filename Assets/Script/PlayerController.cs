@@ -1,41 +1,79 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerController : MonoBehaviour
+public class PlayerControllerHandle : MonoBehaviour
 {
-    public WheelSensor leftSensor;
-    public WheelSensor rightSensor;
+    public Transform cameraTransform;
 
-    public float moveSpeed = 5f;
-    public float rotationSpeed = 300f; // È¸Àü ¼Óµµ Á¶Àı
-    private float rotateInput;
+    private bool isGrounded = false;
+    
+    [SerializeField] public float moveSpeed = 10f;
 
     private Rigidbody rb;
     private Vector3 inputDirection;
 
+    [SerializeField] public float mouseSensitivity = 5f;
+    private float mouseX;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+        // ìì‹ ì„ ì¹´ë©”ë¼ íƒ€ê²Ÿìœ¼ë¡œ ì„¤ì • (ì¶”í›„ ë³€ê²½ í•„ìš”)
+        CameraFollow.Instance?.SetTarget(transform); 
+    }
+    
+    private void OnCollisionStay (Collision collision)
+    {
+        if (isGrounded == true) return;
+        if (collision.collider.CompareTag("Ground")) isGrounded = true;
+        Debug.Log("ë¶™ìŒ");
     }
 
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.collider.CompareTag("Ground")) isGrounded = false;
+        Debug.Log("ë–¨ì–´ì§");
+    }
+    void Update()
+    {
+        HandleInput();
+    }
+
+    void FixedUpdate()
+    {
+        HandleMouseLook();
+        HandleMovement();
+    }
     private void HandleInput()
     {
-        float h = Input.GetAxisRaw("Horizontal"); // A/D
-        float v = Input.GetAxisRaw("Vertical");   // W/S
+        ArrowKeys();
+    }
 
-        // ¿ÀºêÁ§Æ® ±âÁØ ¹æÇâÀ¸·Î º¯È¯
-        Vector3 right = transform.right;
-        Vector3 forward = transform.forward;
+    private void HandleMovement()
+    {
+        // HandleRotation();
+        HandlePosition();
+    }
 
-        inputDirection = (right * h + forward * v).normalized;
+    private void ArrowKeys()
+    {
+        float horizontalh = Input.GetAxisRaw("Horizontal"); // A/D
+        float vertical = Input.GetAxisRaw("Vertical");   // W/S
 
-        // È¸Àü ÀÔ·Â ÃÊ±âÈ­
-        rotateInput = 0f;
+        Vector3 forward = CameraFollow.Instance.GetViewForward();
+        Vector3 right = CameraFollow.Instance.GetViewRight();
 
-        if (Input.GetKey(KeyCode.Q)) rotateInput = -1f;
-        else if (Input.GetKey(KeyCode.E)) rotateInput = 1f;
+        inputDirection = (right * horizontalh + forward * vertical).normalized;
+    }
+
+    
+    private void HandleMouseLook() // ë§ˆìš°ìŠ¤ë¡œ íšŒì „
+    {
+        mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        transform.Rotate(0, mouseX, 0); // Yì¶• íšŒì „
     }
 
     private void HandlePosition()
@@ -44,69 +82,17 @@ public class PlayerController : MonoBehaviour
         Vector3 currentVelocity = rb.velocity;
         Vector3 neededVelocityChange = desiredVelocity - currentVelocity;
 
-        // ¿ÀºêÁ§Æ® ±âÁØ ¹æÇâÀÇ XZ Æò¸é¸¸ °í·Á
+        // ì˜¤ë¸Œì íŠ¸ ê¸°ì¤€ ë°©í–¥ì˜ XZ í‰ë©´ë§Œ ê³ ë ¤
         neededVelocityChange.y = 0f;
 
-        // Èû °­µµ (¼ÓµµÂ÷ÀÌ ºñ·Ê) + Á¦ÇÑ
+        // í˜ ê°•ë„ (ì†ë„ì°¨ì´ ë¹„ë¡€) + ì œí•œ
         Vector3 force = neededVelocityChange * rb.mass / Time.fixedDeltaTime;
 
-        // ¹ÙÄû¿¡¸¸ Èû ºĞ¹è
-        if (leftSensor.isGrounded)
+        // ë°”í€´ì—ë§Œ í˜ ë¶„ë°°
+        if (isGrounded)
         {
-            rb.AddForceAtPosition(force * 0.5f, leftSensor.transform.position, ForceMode.Force);
+            rb.AddForceAtPosition(force * 0.5f, transform.position, ForceMode.Force);
         }
 
-        if (rightSensor.isGrounded)
-        {
-            rb.AddForceAtPosition(force * 0.5f, rightSensor.transform.position, ForceMode.Force);
-        }
-    }
-
-
-    private void HandleRotation()
-    {
-        if (rotateInput == 0f) return;
-
-        float direction = 0f;
-
-        if (leftSensor.isGrounded)
-            direction += rotateInput; // ¿ŞÂÊ ¹ÙÄû È¸Àü ¹æÇâ
-
-        if (rightSensor.isGrounded)
-            direction += rotateInput; // ¿À¸¥ÂÊ ¹ÙÄû È¸Àü ¹æÇâ
-
-        // ½ÇÁ¦ È¸Àü Àû¿ë (YÃà È¸Àü torque »ç¿ë)
-        if (direction != 0f)
-        {
-            Vector3 localTorque = transform.up * direction * rotationSpeed;
-            rb.AddTorque(localTorque, ForceMode.Acceleration);
-        }
-    }
-
-    private void HandleMovement()
-    {
-        HandleRotation();
-        HandlePosition();
-
-        // À§´Â µ¿½ÃÅ°, ¾Æ·¡´Â °³º°ÀÔ·Â Å°
-
-        //if (inputDirection != Vector3.zero)
-        //{
-        //    HandlePosition();
-        //}
-        //else if (rotateInput != 0f)
-        //{
-        //    HandleRotation();
-        //}
-    }
-
-    void Update()
-    {
-        HandleInput();
-    }
-
-    void FixedUpdate()
-    {
-        HandleMovement();
     }
 }
