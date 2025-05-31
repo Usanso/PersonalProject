@@ -214,9 +214,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 433969920}
-  - component: {fileID: 433969918}
   - component: {fileID: 433969919}
   - component: {fileID: 433969921}
+  - component: {fileID: 433969923}
+  - component: {fileID: 433969924}
   m_Layer: 0
   m_Name: Palletrobot
   m_TagString: Untagged
@@ -224,21 +225,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &433969918
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 433969917}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0ac7f0240a0d1b446b90b73003cf46f4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cameraTransform: {fileID: 963194228}
-  moveSpeed: 5
-  mouseSensitivity: 2
 --- !u!54 &433969919
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -247,9 +233,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 433969917}
   serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_Mass: 5
+  m_Drag: 3
+  m_AngularDrag: 0.1
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -263,7 +249,7 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 0
 --- !u!4 &433969920
@@ -303,6 +289,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.7737856, y: 0.13209414, z: 0.94252324}
   m_Center: {x: 0.00068855286, y: 0.0769366, z: 0.0022369623}
+--- !u!114 &433969923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 433969917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a57fef3faf49aa645a79a8193f7ed093, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraTransform: {fileID: 963194228}
+  moveSpeed: 8
+  mouseSensitivity: 5
+--- !u!114 &433969924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 433969917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f472e759e6ca2e4ea5c8126b5d2e6e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  itemHoldPoint: {fileID: 0}
+  pickupRange: 1.5
+  showDebugGizmos: 1
+  isPlayerControlled: 0
 --- !u!1 &454506797
 GameObject:
   m_ObjectHideFlags: 0
@@ -774,7 +791,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: {fileID: 433969920}
   offset: {x: 0, y: 5, z: -8}
-  followSpeed: 5
 --- !u!1 &1476055872
 GameObject:
   m_ObjectHideFlags: 0

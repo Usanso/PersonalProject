@@ -48,7 +48,7 @@ public class RobotActionRecorder : MonoBehaviour
 
     // 로봇 컴포넌트 참조
     private Transform robotTransform;
-    private RobotController robotController; // 로봇의 물건 들기/놓기 등을 담당하는 컴포넌트
+    private PlayerItemController robotController; // 로봇의 물건 들기/놓기 등을 담당하는 컴포넌트
 
     #region 초기화
 
@@ -58,12 +58,13 @@ public class RobotActionRecorder : MonoBehaviour
     private void Awake()
     {
         robotTransform = transform;
-        robotController = GetComponent<RobotController>();
+        robotController = GetComponent<PlayerItemController>();
     }
 
     #endregion
 
     #region 녹화 관련 메서드
+
 
     /// <summary>
     /// 행동 녹화 시작
@@ -161,6 +162,17 @@ public class RobotActionRecorder : MonoBehaviour
 
         if (showDebugInfo)
             Debug.Log($"특별 행동 기록: {actionType}");
+    }
+
+    /// <summary>
+    /// 프로그래밍 방식으로 특정 위치로 이동 (재생 시 사용)
+    /// </summary>
+    /// <param name="targetPosition">목표 위치</param>
+    public void MoveToPosition(Vector3 targetPosition)
+    {
+        // 재생 시에는 물리 법칙 무시하고 직접 이동
+        transform.position = targetPosition;
+
     }
 
     #endregion
@@ -286,15 +298,37 @@ public class RobotActionRecorder : MonoBehaviour
         switch (frame.actionType)
         {
             case "pickup":
-                robotController.ExecutePickupAction();
+                ExecutePickupAction();
                 break;
             case "drop":
-                robotController.ExecuteDropAction();
+                ExecuteDropAction();
                 break;
         }
 
         if (showDebugInfo)
             Debug.Log($"특별 행동 실행: {frame.actionType}");
+    }
+
+    /// <summary>
+    /// 재생 시 픽업 행동 실행
+    /// </summary>
+    public void ExecutePickupAction()
+    {
+        //if (carriedItem == null)
+        //{
+        //    TryPickupItem();
+        //}
+    }
+
+    /// <summary>
+    /// 재생 시 드롭 행동 실행
+    /// </summary>
+    public void ExecuteDropAction()
+    {
+        //if (carriedItem != null)
+        //{
+        //    DropItem();
+        //}
     }
 
     #endregion
