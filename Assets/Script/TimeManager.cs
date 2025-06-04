@@ -11,15 +11,15 @@ public class TimeManager : MonoBehaviour
     public static TimeManager Instance { get; private set; }
 
     [Header("시간 설정")]
-    public float maxTime = 10f;         // 전체 타임라인 길이
-    public float currentTime = 0f;      // 현재 시간 (0 ~ maxTime)
+    [SerializeField] public float maxTime = 10f;         // 전체 타임라인 길이
+    [SerializeField] public float currentTime = 0f;      // 현재 시간 (0 ~ maxTime) 
     public float playbackSpeed = 1f;    // 재생 속도 (1 = 정방향, -1 = 역방향)
 
     [Header("시간 상태")]
-    public bool isPlaying = false;
+    public bool isPlaying = true;
 
     // 외부 시스템이 시간 변화에 반응하도록 이벤트 제공
-    public Action<float> OnTimeUpdated;
+    public event Action<bool> OnTimeUpdated;
 
     private void Awake()
     {
@@ -31,8 +31,11 @@ public class TimeManager : MonoBehaviour
         Instance = this;
     }
 
+
+
     private void Update()
     {
+        PlayButtonInput();
         if (!isPlaying) return;
 
         // 시간 진행
@@ -42,8 +45,31 @@ public class TimeManager : MonoBehaviour
         currentTime = Mathf.Clamp(currentTime, 0f, maxTime);
 
         // 시간 업데이트 이벤트 실행
-        OnTimeUpdated?.Invoke(currentTime);
+        OnTimeUpdated?.Invoke(isPlaying);
 
+        TimeMaxCheck();
+    }
+
+    public void PlayButtonInput()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (isPlaying)
+            {
+                Pause();
+            }
+            else
+            {
+                Play();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 시간이 0미만 음수거나, 지정된 시간을 초과한 경우 자동으로 일시정지
+    /// </summary>
+    public void TimeMaxCheck()
+    {
         // 시간이 끝에 도달하면 정지
         if (currentTime >= maxTime || currentTime <= 0f)
         {
@@ -58,6 +84,9 @@ public class TimeManager : MonoBehaviour
     {
         playbackSpeed = speed;
         isPlaying = true;
+        Time.timeScale = 1f; // 정상 시간 흐름
+        OnTimeUpdated?.Invoke(true);
+        CursorUtils.LockCursor();
     }
 
     /// <summary>
@@ -66,6 +95,10 @@ public class TimeManager : MonoBehaviour
     public void Pause()
     {
         isPlaying = false;
+        Time.timeScale = 0f; // Unity 전체 시간 정지
+        OnTimeUpdated?.Invoke(false);
+        CursorUtils.UnlockCursor();
+
     }
 
     /// <summary>
@@ -75,7 +108,7 @@ public class TimeManager : MonoBehaviour
     {
         Pause();
         currentTime = 0f;
-        OnTimeUpdated?.Invoke(currentTime);
+        OnTimeUpdated?.Invoke(isPlaying);
     }
 
     /// <summary>
@@ -84,12 +117,12 @@ public class TimeManager : MonoBehaviour
     public void JumpTo(float targetTime)
     {
         Pause();
-        currentTime = Mathf.Clamp(targetTime, 0f, maxTime);
-        OnTimeUpdated?.Invoke(currentTime);
+        currentTime = Mathf.Clamp(targetTime, 0f, maxTime); 
+        OnTimeUpdated?.Invoke(isPlaying); // 이벤트 현재시간으로 
     }
 
     /// <summary>
-    /// 과거로 되감기
+    /// 과거로 되감기 (안쓸거 같으면 삭제)
     /// </summary>
     public void RewindTo(float targetTime)
     {
@@ -97,7 +130,7 @@ public class TimeManager : MonoBehaviour
         {
             Pause();
             currentTime = Mathf.Clamp(targetTime, 0f, maxTime);
-            OnTimeUpdated?.Invoke(currentTime);
+            OnTimeUpdated?.Invoke(isPlaying);
         }
     }
 }

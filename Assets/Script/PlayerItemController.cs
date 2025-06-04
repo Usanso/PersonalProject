@@ -1,29 +1,30 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
+using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 
 /// <summary>
-/// ·Îº¿ÀÇ ¹°°Ç Á¶ÀÛ, (³ìÈ­ ¹× Àç»ıÀÌ ÀÏºÎ ³²¾ÆÀÖÀ½) ´ã´çÇÏ´Â ÄÁÆ®·Ñ·¯
+/// ë¡œë´‡ì˜ ë¬¼ê±´ ì¡°ì‘, (ë…¹í™” ë° ì¬ìƒì´ ì¼ë¶€ ë‚¨ì•„ìˆìŒ) ë‹´ë‹¹í•˜ëŠ” ì»¨íŠ¸ë¡¤ëŸ¬
 /// </summary>
 public class PlayerItemController : MonoBehaviour
 {
-    // ÄÄÆ÷³ÍÆ® ÂüÁ¶
+    // ì»´í¬ë„ŒíŠ¸ ì°¸ì¡°
     private Rigidbody rb;
-    private RobotActionRecorder actionRecorder;
+    private PlayerActionRecorder actionRecorder;
 
-    [Header("¹°°Ç Á¶ÀÛ ¼³Á¤")]
-    [SerializeField] private Transform itemHoldPoint; // ¹°°ÇÀ» µé À§Ä¡
-    [SerializeField] private float pickupRange = 1.5f; // ¹°°ÇÀ» µé ¼ö ÀÖ´Â °Å¸®
-    private LayerMask itemLayerMask = 128; // ¹°°Ç ·¹ÀÌ¾î
+    [Header("ë¬¼ê±´ ì¡°ì‘ ì„¤ì •")]
+    [SerializeField] private Transform itemHoldPoint; // ë¬¼ê±´ì„ ë“¤ ìœ„ì¹˜
+    [SerializeField] private float pickupRange = 1.5f; // ë¬¼ê±´ì„ ë“¤ ìˆ˜ ìˆëŠ” ê±°ë¦¬
+    private LayerMask itemLayerMask = 128; // ë¬¼ê±´ ë ˆì´ì–´
 
-    [Header("µğ¹ö±×")]
+    // ìƒíƒœ ë³€ìˆ˜
+    [SerializeField] private bool isActive = true; // í”Œë ˆì´ì–´ê°€ ì¡°ì‘ ì¤‘ì¸ì§€
+    private GameObject carriedItem = null; // í˜„ì¬ ë“¤ê³  ìˆëŠ” ë¬¼ê±´
+
+    [Header("ë””ë²„ê·¸")]
     [SerializeField] private bool showDebugGizmos = true;
 
-    // »óÅÂ º¯¼ö
-    [SerializeField] private bool isPlayerControlled = false; // ÇÃ·¹ÀÌ¾î°¡ Á¶ÀÛ ÁßÀÎÁö
-    private GameObject carriedItem = null; // ÇöÀç µé°í ÀÖ´Â ¹°°Ç
-
-    #region ÃÊ±âÈ­
+    #region ì´ˆê¸°í™”
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -33,30 +34,46 @@ public class PlayerItemController : MonoBehaviour
         {
             GameObject holdPoint = new GameObject("ItemHoldPoint");
             holdPoint.transform.SetParent(transform);
-            holdPoint.transform.localPosition = Vector3.up * 0.5f; // µé°í ÀÖ´Â ¹°°Ç À§Ä¡ (·Îº¿ À§ÂÊ)
+            holdPoint.transform.localPosition = Vector3.up * 0.5f; // ë“¤ê³  ìˆëŠ” ë¬¼ê±´ ìœ„ì¹˜ (ë¡œë´‡ ìœ„ìª½)
             itemHoldPoint = holdPoint.transform;
         }
     }
+
+    private void OnEnable()
+    {
+        TimeManager.Instance.OnTimeUpdated += TimeHandle; // ì´ë²¤íŠ¸ êµ¬ë…
+    }
+
+    private void OnDisable()
+    {
+        TimeManager.Instance.OnTimeUpdated -= TimeHandle; // ì´ë²¤íŠ¸ êµ¬ë… í•´ì œ
+    }
+
+    private void TimeHandle(bool isPaused)
+    {
+        isActive = isPaused;
+    }
     #endregion
 
-    #region Unity »ı¸íÁÖ±â ¹× ±âÁî¸ğ
+    #region Unity ìƒëª…ì£¼ê¸° ë° ê¸°ì¦ˆëª¨
     private void Update()
     {
+        if (!isActive) return;
         HandleInput();
     }
 
     /// <summary>
-    /// µğ¹ö±× ±âÁî¸ğ ±×¸®±â
+    /// ë””ë²„ê·¸ ê¸°ì¦ˆëª¨ ê·¸ë¦¬ê¸°
     /// </summary>
     private void OnDrawGizmosSelected()
     {
         if (!showDebugGizmos) return;
 
-        // ÇÈ¾÷ ¹üÀ§
+        // í”½ì—… ë²”ìœ„
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(transform.position, pickupRange);
 
-        // ¾ÆÀÌÅÛ È¦µå Æ÷ÀÎÆ®
+        // ì•„ì´í…œ í™€ë“œ í¬ì¸íŠ¸
         if (itemHoldPoint != null)
         {
             Gizmos.color = Color.yellow;
@@ -65,37 +82,37 @@ public class PlayerItemController : MonoBehaviour
     }
     #endregion
 
-    #region ÇÃ·¹ÀÌ¾î ÀÔ·Â Ã³¸®
+    #region í”Œë ˆì´ì–´ ì…ë ¥ ì²˜ë¦¬
 
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾î Á¶ÀÛ ¸ğµå ¼³Á¤ (ÈÄÃß)
+    /// í”Œë ˆì´ì–´ ì¡°ì‘ ëª¨ë“œ ì„¤ì • (í›„ì¶”)
     /// </summary>
-    /// <param name="controlled">ÇÃ·¹ÀÌ¾î°¡ Á¶ÀÛÇÒÁö ¿©ºÎ</param>
+    /// <param name="controlled">í”Œë ˆì´ì–´ê°€ ì¡°ì‘í• ì§€ ì—¬ë¶€</param>
     public void SetPlayerControlled(bool controlled)
     {
-        isPlayerControlled = controlled;
+        isActive = controlled;
 
         if (controlled && actionRecorder != null)
         {
-            // ÇÃ·¹ÀÌ¾î Á¶ÀÛ ½ÃÀÛ ½Ã ³ìÈ­ ½ÃÀÛ
+            // í”Œë ˆì´ì–´ ì¡°ì‘ ì‹œì‘ ì‹œ ë…¹í™” ì‹œì‘
             actionRecorder.StartRecording();
         }
         else if (!controlled && actionRecorder != null)
         {
-            // ÇÃ·¹ÀÌ¾î Á¶ÀÛ Á¾·á ½Ã ³ìÈ­ ÁßÁö
+            // í”Œë ˆì´ì–´ ì¡°ì‘ ì¢…ë£Œ ì‹œ ë…¹í™” ì¤‘ì§€
             actionRecorder.StopRecording();
         }
     }
 
     /// <summary>
-    /// ÀÔ·Â Ã³¸® (Update¿¡¼­ È£Ãâ)
+    /// ì…ë ¥ ì²˜ë¦¬ (Updateì—ì„œ í˜¸ì¶œ)
     /// </summary>
     private void HandleInput()
     {
-        if (!isPlayerControlled) return;
+        if (!isActive) return;
 
-        // ½ºÆäÀÌ½º¹Ù·Î ¹°°Ç µé±â/³õ±â
-        if (Input.GetKeyDown(KeyCode.Space))
+        // ìŠ¤í˜ì´ìŠ¤ë°”ë¡œ ë¬¼ê±´ ë“¤ê¸°/ë†“ê¸°
+        if (Input.GetMouseButtonDown(0))
         {
             HandleItemInteraction();
         }
@@ -103,37 +120,37 @@ public class PlayerItemController : MonoBehaviour
 
     #endregion
 
-    #region ¹°°Ç Á¶ÀÛ
+    #region ë¬¼ê±´ ì¡°ì‘
 
     /// <summary>
-    /// ¹°°Ç »óÈ£ÀÛ¿ë Ã³¸® (µé±â/³õ±â)
+    /// ë¬¼ê±´ ìƒí˜¸ì‘ìš© ì²˜ë¦¬ (ë“¤ê¸°/ë†“ê¸°)
     /// </summary>
     private void HandleItemInteraction()
     {
         if (carriedItem == null)
         {
-            // ¹°°Ç µé±â ½Ãµµ
+            // ë¬¼ê±´ ë“¤ê¸° ì‹œë„
             TryPickupItem();
         }
         else
         {
-            // ¹°°Ç ³õ±â
+            // ë¬¼ê±´ ë†“ê¸°
             DropItem();
         }
     }
 
     /// <summary>
-    /// ÁÖº¯ ¹°°Ç µé±â ½Ãµµ
+    /// ì£¼ë³€ ë¬¼ê±´ ë“¤ê¸° ì‹œë„
     /// </summary>
     private void TryPickupItem()
     {
-        // ÁÖº¯ ¹°°Ç °Ë»ö
+        // ì£¼ë³€ ë¬¼ê±´ ê²€ìƒ‰
         Collider[] nearbyItems = Physics.OverlapSphere(transform.position, pickupRange, itemLayerMask);
 
         GameObject closestItem = null;
         float closestDistance = float.MaxValue;
 
-        // °¡Àå °¡±î¿î ¹°°Ç Ã£±â
+        // ê°€ì¥ ê°€ê¹Œìš´ ë¬¼ê±´ ì°¾ê¸°
         foreach (var itemCollider in nearbyItems)
         {
             float distance = Vector3.Distance(transform.position, itemCollider.transform.position);
@@ -144,7 +161,7 @@ public class PlayerItemController : MonoBehaviour
             }
         }
 
-        // ¹°°Ç µé±â ½ÇÇà
+        // ë¬¼ê±´ ë“¤ê¸° ì‹¤í–‰
         if (closestItem != null)
         {
             PickupItem(closestItem);
@@ -152,33 +169,33 @@ public class PlayerItemController : MonoBehaviour
     }
 
     /// <summary>
-    /// ¹°°Ç µé±â ½ÇÇà
+    /// ë¬¼ê±´ ë“¤ê¸° ì‹¤í–‰
     /// </summary>
-    /// <param name="item">µé ¹°°Ç</param>
+    /// <param name="item">ë“¤ ë¬¼ê±´</param>
     private void PickupItem(GameObject item)
     {
         carriedItem = item;
 
-        // ¹°°ÇÀ» È¦µå Æ÷ÀÎÆ®·Î ÀÌµ¿
+        // ë¬¼ê±´ì„ í™€ë“œ í¬ì¸íŠ¸ë¡œ ì´ë™
         item.transform.SetParent(itemHoldPoint);
         item.transform.localPosition = Vector3.zero;
         item.transform.localRotation = Quaternion.identity;
 
-        // ¹°¸® ºñÈ°¼ºÈ­
+        // ë¬¼ë¦¬ ë¹„í™œì„±í™”
         Rigidbody itemRb = item.GetComponent<Rigidbody>();
         if (itemRb != null)
         {
             itemRb.isKinematic = true;
         }
 
-        // Ãæµ¹ ºñÈ°¼ºÈ­
+        // ì¶©ëŒ ë¹„í™œì„±í™”
         Collider itemCollider = item.GetComponent<Collider>();
         if (itemCollider != null)
         {
             itemCollider.isTrigger = true;
         }
 
-        // ³ìÈ­ ÁßÀÌ¶ó¸é ÇÈ¾÷ Çàµ¿ ±â·Ï
+        // ë…¹í™” ì¤‘ì´ë¼ë©´ í”½ì—… í–‰ë™ ê¸°ë¡
         if (actionRecorder != null && actionRecorder.IsRecording())
         {
             actionRecorder.RecordSpecialAction("pickup");
@@ -186,34 +203,34 @@ public class PlayerItemController : MonoBehaviour
     }
 
     /// <summary>
-    /// ¹°°Ç ³õ±â
+    /// ë¬¼ê±´ ë†“ê¸°
     /// </summary>
     private void DropItem()
     {
         if (carriedItem == null) return;
 
-        // ³õÀ» À§Ä¡ °è»ê (·Îº¿ ¾ÕÂÊ)
+        // ë†“ì„ ìœ„ì¹˜ ê³„ì‚° (ë¡œë´‡ ì•ìª½)
         Vector3 dropPosition = transform.position + transform.forward * 1.5f + Vector3.up * 1f;
 
-        // ¹°°ÇÀ» ¿ùµå·Î ÀÌµ¿
+        // ë¬¼ê±´ì„ ì›”ë“œë¡œ ì´ë™
         carriedItem.transform.SetParent(null);
         carriedItem.transform.position = dropPosition;
 
-        // ¹°¸® È°¼ºÈ­
+        // ë¬¼ë¦¬ í™œì„±í™”
         Rigidbody itemRb = carriedItem.GetComponent<Rigidbody>();
         if (itemRb != null)
         {
             itemRb.isKinematic = false;
         }
 
-        // Ãæµ¹ È°¼ºÈ­
+        // ì¶©ëŒ í™œì„±í™”
         Collider itemCollider = carriedItem.GetComponent<Collider>();
         if (itemCollider != null)
         {
             itemCollider.isTrigger = false;
         }
 
-        // ³ìÈ­ ÁßÀÌ¶ó¸é µå·Ó Çàµ¿ ±â·Ï
+        // ë…¹í™” ì¤‘ì´ë¼ë©´ ë“œë¡­ í–‰ë™ ê¸°ë¡
         if (actionRecorder != null && actionRecorder.IsRecording())
         {
             actionRecorder.RecordSpecialAction("drop");
@@ -224,21 +241,21 @@ public class PlayerItemController : MonoBehaviour
 
     #endregion
 
-    #region »óÅÂ È®ÀÎ ¸Ş¼­µå
+    #region ìƒíƒœ í™•ì¸ ë©”ì„œë“œ
 
     /// <summary>
-    /// ¹°°ÇÀ» µé°í ÀÖ´ÂÁö È®ÀÎ
+    /// ë¬¼ê±´ì„ ë“¤ê³  ìˆëŠ”ì§€ í™•ì¸
     /// </summary>
-    /// <returns>¹°°Ç ¼ÒÁö ¿©ºÎ</returns>
+    /// <returns>ë¬¼ê±´ ì†Œì§€ ì—¬ë¶€</returns>
     public bool IsCarryingItem()
     {
         return carriedItem != null;
     }
 
     /// <summary>
-    /// µé°í ÀÖ´Â ¹°°ÇÀÇ À§Ä¡ ¹İÈ¯
+    /// ë“¤ê³  ìˆëŠ” ë¬¼ê±´ì˜ ìœ„ì¹˜ ë°˜í™˜
     /// </summary>
-    /// <returns>¹°°Ç À§Ä¡</returns>
+    /// <returns>ë¬¼ê±´ ìœ„ì¹˜</returns>
     public Vector3 GetCarriedItemPosition()
     {
         if (carriedItem != null)
@@ -247,9 +264,9 @@ public class PlayerItemController : MonoBehaviour
     }
 
     /// <summary>
-    /// µé°í ÀÖ´Â ¹°°ÇÀÇ À§Ä¡ ¼³Á¤ (Àç»ı ½Ã »ç¿ë)
+    /// ë“¤ê³  ìˆëŠ” ë¬¼ê±´ì˜ ìœ„ì¹˜ ì„¤ì • (ì¬ìƒ ì‹œ ì‚¬ìš©)
     /// </summary>
-    /// <param name="position">¼³Á¤ÇÒ À§Ä¡</param>
+    /// <param name="position">ì„¤ì •í•  ìœ„ì¹˜</param>
     public void SetCarriedItemPosition(Vector3 position)
     {
         if (carriedItem != null)
@@ -259,13 +276,18 @@ public class PlayerItemController : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾î Á¶ÀÛ ÁßÀÎÁö È®ÀÎ
+    /// í”Œë ˆì´ì–´ ì¡°ì‘ ì¤‘ì¸ì§€ í™•ì¸
     /// </summary>
-    /// <returns>ÇÃ·¹ÀÌ¾î Á¶ÀÛ ¿©ºÎ</returns>
+    /// <returns>í”Œë ˆì´ì–´ ì¡°ì‘ ì—¬ë¶€</returns>
     public bool IsPlayerControlled()
     {
-        return isPlayerControlled;
+        return isActive;
     }
 
     #endregion
+
+    public void SetInputActive(bool active)
+    {
+        isActive = active;
+    }
 }

@@ -12,22 +12,24 @@ public class PlayerMoveController : MonoBehaviour
     // 컴포넌트 참고
     private Rigidbody rb;
     public Transform cameraTransform;
-    private RobotActionRecorder actionRecorder;
+    private PlayerActionRecorder actionRecorder;
 
     [Header("이동 조작 설정")]
     private bool isGrounded = false;
     private Vector3 inputDirection;
     [SerializeField] private float moveSpeed = 8f;
-    [SerializeField] public float mouseSensitivity = 5f;
+    [SerializeField] public float mouseSensitivity = 8f;
 
     // 가속도 옵션
     private float acceleration = 1f; // 가속도 (높을수록 빠르게 목표 속도에 도달)
     private float damping = 0.5f;       // 감속도 (빠르게 멈추는 정도)
-    private Vector3 smoothedVelocity = Vector3.zero; 
+    private Vector3 smoothedVelocity = Vector3.zero;
 
     // [Header("상태 변수")]
     // [SerializeField] private bool isPlayerControlled = false; 플레이어가 조작 중인지
     // private GameObject carriedItem = null; 현재 들고 있는 물건, 무게에 따라 가속도 감속도 변경 (후추)
+
+    private bool isActive = true; // 작동여부 스크립트 자체 비활성화 또는 인풋 비활성화 추후 수정
 
     #region 초기화
     private void Awake()
@@ -61,6 +63,7 @@ public class PlayerMoveController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (!isActive) return; // 활성화 여부 체크
         HandleMouseLook();
         HandleMovement();
     }
@@ -113,5 +116,16 @@ public class PlayerMoveController : MonoBehaviour
         {
             rb.AddForce(force, ForceMode.Force); 
         }
+    }
+
+    /// <summary>
+    /// 로봇 활성화 또는 비활성화 시키는 함수
+    /// </summary>
+    /// <param name="active"></param>
+    public void SetActive(bool active)
+    {
+        isActive = active;
+        GetComponent<PlayerMoveController>().enabled = active; // 문제 발생 테스트 해보기
+        GetComponent<PlayerItemController>().enabled = active;
     }
 }

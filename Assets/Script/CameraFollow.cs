@@ -14,7 +14,10 @@ public class CameraFollow : MonoBehaviour
 
     void LateUpdate()
     {
-        if (!target) return;
+        if (!target) return; 
+
+        // 오브젝트가 회전을 하면 카메라가 그 앞을 찍는 방식
+        // 추후에 반대로 수정, 카메라가 움직이고 오브젝트가 그것을 따라가도록
 
         Quaternion yawRotation = Quaternion.Euler(0f, target.eulerAngles.y, 0f);
         Vector3 desiredPosition = target.position + yawRotation * offset;

@@ -41,6 +41,12 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject); // 이 오브젝트는 씬이 바뀌어도 유지
     }
 
+    private void Start()
+    {
+        // 초기 세팅
+        CursorUtils.LockCursor();
+    }
+
     private void Update()
     {
         // 현재 상태가 게임 중일 때만 승리 조건을 계속 체크
@@ -57,7 +63,8 @@ public class GameManager : MonoBehaviour
     {
         CurrentState = GameState.Playing;
         // uiManager?.OnGameStarted();     // UI에 알리기
-        // 위 물음표는 아래의 축약형임
+        
+        // 위 물음표는 아래의 축약형임 (예외 처리하여 안전성 확보가 목적인듯함)
         // if (uiManager != null)
         // {
         //     uiManager.OnGameEnded();
