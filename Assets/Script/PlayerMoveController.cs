@@ -26,7 +26,7 @@ public class PlayerMoveController : MonoBehaviour
     private Vector3 smoothedVelocity = Vector3.zero;
 
     // [Header("상태 변수")]
-    // [SerializeField] private bool isPlayerControlled = false; 플레이어가 조작 중인지
+    // [SerializeField] private bool isPlayerControlled = false; 플레이어가 조작 중인지 
     // private GameObject carriedItem = null; 현재 들고 있는 물건, 무게에 따라 가속도 감속도 변경 (후추)
 
     private bool isActive = true; // 작동여부 스크립트 자체 비활성화 또는 인풋 비활성화 추후 수정
