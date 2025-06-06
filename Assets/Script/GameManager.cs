@@ -44,7 +44,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         // 초기 세팅
-        CursorUtils.LockCursor();
+        MouseManager.Instance.LockCursor();
     }
 
     private void Update()

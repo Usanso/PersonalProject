@@ -13,7 +13,7 @@ public class RecordingManager : MonoBehaviour
     public static RecordingManager Instance { get; private set; }
 
     [Header("녹화 설정")]
-    [SerializeField] private float recordInterval = 0.1f; // 녹화 간격 (초)
+    // [SerializeField] private float recordInterval = 0.1f; // 녹화 간격 (초)
 
     /// <summary>
     /// 전체 로봇 상태 기록 데이터, 로봇ID → 시간 → 로봇상태
