@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// 모든 로봇의 행동을 시간대별로 기록하고 재생
-/// 시간대에 가지고 있던 물리력도 저장
-/// 아이템 줍기 놓기 행동도 기록
+/// 모든 로봇의 행동을 시간대별로 기록하고 재생,
+/// 아이템 줍기 놓기 행동도 기록,
 /// 행동 기록 프레임
 /// </summary>
 public class RecordingManager : MonoBehaviour
@@ -13,7 +12,8 @@ public class RecordingManager : MonoBehaviour
     public static RecordingManager Instance { get; private set; }
 
     [Header("녹화 설정")]
-    // [SerializeField] private float recordInterval = 0.1f; // 녹화 간격 (초)
+    [SerializeField] private float inactiveRecordInterval = 1f; // 비활성 로봇 기록 간격
+    private float inactiveRecordTimer = 0f; // 비활성 로봇 기록용 타이머
 
     /// <summary>
     /// 전체 로봇 상태 기록 데이터, 로봇ID → 시간 → 로봇상태
@@ -28,6 +28,35 @@ public class RecordingManager : MonoBehaviour
             return;
         }
         Instance = this;
+    }
+
+    private void Update()
+    {
+        inactiveRecordTimer += Time.deltaTime;
+        if (inactiveRecordTimer >= inactiveRecordInterval)
+        {
+            RecordInactiveRobots();
+            inactiveRecordTimer = 0f;
+        }
+    }
+
+    /// <summary>
+    /// 조작 중이지 않은 로봇들의 상태를 주기적으로 기록
+    /// </summary>
+    private void RecordInactiveRobots()
+    {
+        if (TimeManager.Instance == null) return;
+
+        float currentTime = TimeManager.Instance.currentTime;
+
+        foreach (var robot in FindObjectsOfType<RobotController>())
+        {
+            if (!robot.IsActive())
+            {
+                bool hasItem = robot.HasItem();
+                RecordRobotState(robot.robotID, currentTime, robot.transform.position, robot.transform.rotation, hasItem);
+            }
+        }
     }
 
     /// <summary>
@@ -110,7 +139,7 @@ public class RecordingManager : MonoBehaviour
         if (!allRecords.ContainsKey(robotID)) return;
 
         // 현재 시간을 초과한 시간을 담기 위한 리스트 변수
-        List<float> timesToRemove = new List<float>();
+        List<float> timesToRemove = new();
 
         // 기존 딕셔너리에서 현재시간 이상만 순회하여 찾음
         foreach (float time in allRecords[robotID].Keys)

@@ -579,7 +579,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7819841739413521726, guid: 6e036e36e53545a4e9dac61ba5388f5a, type: 3}
       propertyPath: robotID
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7819841739413521726, guid: 6e036e36e53545a4e9dac61ba5388f5a, type: 3}
+      propertyPath: mouseSensitivity
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1438,6 +1442,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01020607afe81e84e833b653e96cabfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  inactiveRecordInterval: 1
 --- !u!1001 &382070076926835028
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1492,7 +1497,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7819841739413521726, guid: 6e036e36e53545a4e9dac61ba5388f5a, type: 3}
       propertyPath: robotID
-      value: 1
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7819841739413521726, guid: 6e036e36e53545a4e9dac61ba5388f5a, type: 3}
+      propertyPath: mouseSensitivity
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

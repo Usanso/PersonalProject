@@ -18,7 +18,8 @@ public class RobotController : MonoBehaviour
     public float damping = 0.5f;
 
     private Rigidbody rb;
-    [SerializeField] private bool isActive = false;
+    private bool isActive = false;
+    private bool isPlaying = true;
     private bool isGrounded = false;
     private GameObject heldItem = null;
 
@@ -45,7 +46,7 @@ public class RobotController : MonoBehaviour
     private void Update()
     {
         if (!isActive) return;
-
+        if (!isPlaying) return;
         HandleInput();
         RecordCurrentState();
     }
@@ -234,10 +235,11 @@ public class RobotController : MonoBehaviour
     /// <param name="isPlaying">시간 재생 여부</param>
     private void OnTimeStateChanged(bool isPlaying)
     {
-        if (!isPlaying)
-        {
-            ApplyRecordedState();
-        }
+        this.isPlaying = isPlaying;
+        //if (!isPlaying)
+        //{
+        //    ApplyRecordedState();
+        //}
     }
 
     /// <summary>
@@ -253,10 +255,9 @@ public class RobotController : MonoBehaviour
                 transform.position = state.position;
                 transform.rotation = state.rotation;
 
-                // Handle item state
+                // 기록상에 아이템 주운 상태면 주운 상태로 복구
                 if (state.hasItem && heldItem == null)
                 {
-                    // Find and pickup nearest item
                     TryPickupItem();
                 }
                 else if (!state.hasItem && heldItem != null)
@@ -311,5 +312,20 @@ public class RobotController : MonoBehaviour
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(itemHoldPoint.position, 0.2f);
         }
+    }
+    /// <summary>
+    /// 재생중 반환 메서드
+    /// </summary>
+    public bool IsActive()
+    {
+        return isActive;
+    }
+
+    /// <summary>
+    /// 아이템 소지중 반환 메서드
+    /// </summary>
+    public bool HasItem()
+    {
+        return heldItem != null;
     }
 }

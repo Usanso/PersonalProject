@@ -11,13 +11,10 @@ public class TimeManager : MonoBehaviour
     public static TimeManager Instance { get; private set; }
 
     [Header("시간 설정")]
-    [SerializeField] public float maxTime = 60f;         // 전체 타임라인 길이
-    [SerializeField] public float currentTime = 0f;      // 현재 시간 (0 ~ maxTime) 
-    public float playbackSpeed = 1f;    // 재생 속도 (1 = 정방향, -1 = 역방향)
+    [SerializeField] public float maxTime = 60f; // 전체 타임라인 길이
+    [SerializeField] public float currentTime = 0f; // 현재 시간 (0 ~ maxTime) 
+    public float playbackSpeed = 1f; // 재생 속도 (1 = 정방향, -1 = 역방향)
     public bool isPlaying = true;
-
-    // [Header("녹화 설정")]
-    // [SerializeField] private float recordInterval = 0.1f; // 녹화 간격 (초)
 
     // 외부 시스템이 시간 변화에 반응하도록 이벤트 제공
     public event Action<bool> OnTimeUpdated;
@@ -36,7 +33,7 @@ public class TimeManager : MonoBehaviour
     private void Update()
     {
         HandleInput();
-
+        
         if (!isPlaying) return;
 
         UpdateTime();
@@ -80,8 +77,6 @@ public class TimeManager : MonoBehaviour
     /// </summary>
     private void TriggerEvents()
     {
-        // 재생 일시정지 여부 알람 true, false
-        OnTimeUpdated?.Invoke(isPlaying);
         // 현재시간 알람
         OnTimeChanged?.Invoke(currentTime);
     }
@@ -105,7 +100,7 @@ public class TimeManager : MonoBehaviour
         playbackSpeed = speed;
         isPlaying = true;
         Time.timeScale = 1f; // 정상 시간 흐름
-        OnTimeUpdated?.Invoke(true);
+        OnTimeUpdated?.Invoke(isPlaying);
         MouseManager.Instance.LockCursor();
     }
 
@@ -116,7 +111,7 @@ public class TimeManager : MonoBehaviour
     {
         isPlaying = false;
         Time.timeScale = 0f; // Unity 전체 시간 정지
-        OnTimeUpdated?.Invoke(false);
+        OnTimeUpdated?.Invoke(isPlaying);
         MouseManager.Instance.UnlockCursor();
 
     }
@@ -128,7 +123,6 @@ public class TimeManager : MonoBehaviour
     {
         Pause();
         currentTime = 0f;
-        OnTimeUpdated?.Invoke(isPlaying);
     }
 
     /// <summary>
@@ -139,6 +133,5 @@ public class TimeManager : MonoBehaviour
     {
         Pause();
         currentTime = Mathf.Clamp(targetTime, 0f, maxTime);
-        OnTimeUpdated?.Invoke(isPlaying);
     }
 }

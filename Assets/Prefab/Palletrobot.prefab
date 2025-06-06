@@ -282,7 +282,6 @@ MonoBehaviour:
   pickupRange: 1.5
   acceleration: 1
   damping: 0.5
-  isActive: 1
 --- !u!1 &3387175418543872757
 GameObject:
   m_ObjectHideFlags: 0
