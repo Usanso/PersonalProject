@@ -47,14 +47,13 @@ public class RobotController : MonoBehaviour
     {
         if (!isActive) return;
         if (!isPlaying) return;
-        HandleInput();
         RecordCurrentState();
+        HandleInput();
     }
 
     private void FixedUpdate()
     {
         if (!isActive) return;
-
         HandleMovement();
         HandleRotation();
     }
@@ -327,5 +326,14 @@ public class RobotController : MonoBehaviour
     public bool HasItem()
     {
         return heldItem != null;
+    }
+
+    /// <summary>
+    /// 로봇 선택 변경시에 이동변수를 초기화 하여 중복을 방지함
+    /// </summary>
+    public void ResetMovementState()
+    {
+        smoothVelocity = Vector3.zero;
+        // 필요하다면 inputDirection, 기타 상태도 초기화
     }
 }

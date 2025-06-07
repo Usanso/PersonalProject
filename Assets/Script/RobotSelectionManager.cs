@@ -90,6 +90,7 @@ public class RobotSelectionManager : MonoBehaviour
         selectedRobotIndex = index;
         currentRobot = robots[selectedRobotIndex];
         currentRobot.SetActive(true);
+        currentRobot.ResetMovementState();
 
         // 카메라를 새 로봇에 맞춤
         if (CameraController.Instance != null)
