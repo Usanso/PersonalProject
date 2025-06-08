@@ -202,16 +202,8 @@ public class RobotController : MonoBehaviour
     /// </summary>
     private void RecordCurrentState()
     {
-        if (RecordingManager.Instance != null && TimeManager.Instance != null)
-        {
-            RecordingManager.Instance.RecordRobotState(
-                robotID,
-                TimeManager.Instance.currentTime,
-                transform.position,
-                transform.rotation,
-                heldItem != null
-            );
-        }
+        RecordingManager.Instance.RecordRobotState
+            (robotID, TimeManager.Instance.currentTime, transform.position, transform.rotation, heldItem != null);
     }
 
     /// <summary>
