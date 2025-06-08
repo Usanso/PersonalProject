@@ -141,8 +141,27 @@ public class RobotController : MonoBehaviour
 
         if (items.Length > 0)
         {
-            GameObject closestItem = items[0].gameObject;
-            PickupItem(closestItem);
+            // 가장 가까운 아이템 찾기
+            GameObject closestItem = null;
+            float closestDistance = float.MaxValue;
+
+            foreach (Collider itemCollider in items)
+            {
+                // CompletedItem 태그는 이미 정리된 아이템이므로 제외
+                if (itemCollider.CompareTag("CompletedItem")) continue;
+
+                float distance = Vector3.Distance(transform.position, itemCollider.transform.position);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestItem = itemCollider.gameObject;
+                }
+            }
+
+            if (closestItem != null)
+            {
+                PickupItem(closestItem);
+            }
         }
     }
 
@@ -152,22 +171,29 @@ public class RobotController : MonoBehaviour
     /// <param name="item">줍고자 하는 아이템</param>
     private void PickupItem(GameObject item)
     {
+        WarehouseItem warehouseItem = item.GetComponent<WarehouseItem>();
+
+        if (warehouseItem == null)
+        {
+            Debug.LogWarning($"아이템 {item.name}에 WarehouseItem 컴포넌트가 없습니다!");
+            return;
+        }
+
+        // 이미 다른 로봇이 들고 있는 아이템은 줍지 않음
+        if (warehouseItem.currentState == ItemCurrentState.Held)
+        {
+            return;
+        }
+
         heldItem = item;
+
+        // WarehouseItem의 OnPickedUp 메서드 호출 (ItemManager 연동)
+        warehouseItem.OnPickedUp(this);
+
+        // 물리적 부착
         item.transform.SetParent(itemHoldPoint);
         item.transform.localPosition = Vector3.zero;
         item.transform.localRotation = Quaternion.identity;
-
-        Rigidbody itemRb = item.GetComponent<Rigidbody>();
-        if (itemRb != null)
-        {
-            itemRb.isKinematic = true;
-        }
-
-        Collider itemCollider = item.GetComponent<Collider>();
-        if (itemCollider != null)
-        {
-            itemCollider.isTrigger = true;
-        }
     }
 
     /// <summary>
@@ -179,19 +205,31 @@ public class RobotController : MonoBehaviour
 
         Vector3 dropPosition = transform.position + transform.forward * 1.5f + Vector3.up * 0.5f;
 
+        WarehouseItem warehouseItem = heldItem.GetComponent<WarehouseItem>();
+
+        // 물리적 분리
         heldItem.transform.SetParent(null);
         heldItem.transform.position = dropPosition;
 
-        Rigidbody itemRb = heldItem.GetComponent<Rigidbody>();
-        if (itemRb != null)
+        // WarehouseItem의 OnDropped 메서드 호출 (ItemManager 연동)
+        if (warehouseItem != null)
         {
-            itemRb.isKinematic = false;
+            warehouseItem.OnDropped(dropPosition);
         }
-
-        Collider itemCollider = heldItem.GetComponent<Collider>();
-        if (itemCollider != null)
+        else
         {
-            itemCollider.isTrigger = false;
+            // WarehouseItem 컴포넌트가 없는 경우 기본 물리 설정
+            Rigidbody itemRb = heldItem.GetComponent<Rigidbody>();
+            if (itemRb != null)
+            {
+                itemRb.isKinematic = false;
+            }
+
+            Collider itemCollider = heldItem.GetComponent<Collider>();
+            if (itemCollider != null)
+            {
+                itemCollider.isTrigger = false;
+            }
         }
 
         heldItem = null;
@@ -202,8 +240,27 @@ public class RobotController : MonoBehaviour
     /// </summary>
     private void RecordCurrentState()
     {
-        RecordingManager.Instance.RecordRobotState
-            (robotID, TimeManager.Instance.currentTime, transform.position, transform.rotation, heldItem != null);
+        if (RecordingManager.Instance == null || TimeManager.Instance == null) return;
+
+        // 기존 로봇 상태 기록
+        RecordingManager.Instance.RecordRobotState(
+            robotID,
+            TimeManager.Instance.currentTime,
+            transform.position,
+            transform.rotation,
+            heldItem != null
+        );
+
+        // 들고 있는 아이템이 있다면 해당 아이템의 상태도 기록
+        if (heldItem != null)
+        {
+            WarehouseItem warehouseItem = heldItem.GetComponent<WarehouseItem>();
+            if (warehouseItem != null && ItemManager.Instance != null)
+            {
+                // ItemManager가 자동으로 아이템 상태를 기록함
+                // 별도 호출 불필요 (ItemManager.Update에서 처리)
+            }
+        }
     }
 
     /// <summary>
@@ -227,10 +284,10 @@ public class RobotController : MonoBehaviour
     private void OnTimeStateChanged(bool isPlaying)
     {
         this.isPlaying = isPlaying;
-        //if (!isPlaying)
-        //{
-        //    ApplyRecordedState();
-        //}
+        if (!isPlaying)
+        {
+            ApplyRecordedState();
+        }
     }
 
     /// <summary>
@@ -238,24 +295,34 @@ public class RobotController : MonoBehaviour
     /// </summary>
     private void ApplyRecordedState()
     {
-        if (RecordingManager.Instance != null && TimeManager.Instance != null)
-        {
-            RobotState state = RecordingManager.Instance.GetRobotState(robotID, TimeManager.Instance.currentTime);
-            if (state != null)
-            {
-                transform.position = state.position;
-                transform.rotation = state.rotation;
+        if (RecordingManager.Instance == null || TimeManager.Instance == null) return;
 
-                // 기록상에 아이템 주운 상태면 주운 상태로 복구
-                if (state.hasItem && heldItem == null)
-                {
-                    TryPickupItem();
-                }
-                else if (!state.hasItem && heldItem != null)
-                {
-                    DropItem();
-                }
-            }
+        RobotState state = RecordingManager.Instance.GetRobotState(robotID, TimeManager.Instance.currentTime);
+        if (state == null) return;
+
+        // 위치와 회전 복원
+        transform.position = state.position;
+        transform.rotation = state.rotation;
+
+        // 아이템 상태 복원은 ItemManager에서 처리
+        // 여기서는 로봇의 heldItem 참조만 업데이트
+        UpdateHeldItemReference();
+    }
+
+    /// <summary>
+    /// 시간 복원 후 들고 있는 아이템 참조 업데이트
+    /// </summary>
+    public void UpdateHeldItemReference()
+    {
+        // 현재 홀드 포인트에 아이템이 있는지 확인
+        if (itemHoldPoint.childCount > 0)
+        {
+            Transform childItem = itemHoldPoint.GetChild(0);
+            heldItem = childItem.gameObject;
+        }
+        else
+        {
+            heldItem = null;
         }
     }
 

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 시간 슬라이더를 통해 게임 시간을 조작하는 UI 컨트롤러
 /// TimeManager와 연동하여 시간 점프 및 시각적 표시 담당
+/// 시간 맥스 실시간으로 변경_ 마지막시간을 최대시간으로
 /// </summary>
 public class TimeSliderManager : MonoBehaviour
 {
@@ -156,7 +157,7 @@ public class TimeSliderManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 시간 표시 텍스트 업데이트 (선택사항)
+    /// 시간 표시 텍스트 업데이트
     /// </summary>
     private void UpdateTimeDisplay()
     {
@@ -183,7 +184,13 @@ public class TimeSliderManager : MonoBehaviour
     {
         if (RecordingManager.Instance == null) return;
 
-        // 모든 로봇에 대해 해당 시간의 상태 복원
+        // 1. 먼저 아이템 상태 복원 (ItemManager 통해)
+        if (ItemManager.Instance != null)
+        {
+            ItemManager.Instance.RestoreItemStatesAtTime(targetTime);
+        }
+
+        // 2. 로봇 상태 복원
         RobotController[] allRobots = FindObjectsOfType<RobotController>();
 
         foreach (RobotController robot in allRobots)
@@ -196,8 +203,9 @@ public class TimeSliderManager : MonoBehaviour
                 robot.transform.position = recordedState.position;
                 robot.transform.rotation = recordedState.rotation;
 
-                // 아이템 상태 복원은 복잡하므로 일단 주석 처리
-                // TODO: 아이템 상태 복원 로직 추가 필요
+                // 로봇의 들고 있는 아이템 참조 업데이트
+                // (ItemManager에서 이미 아이템을 적절한 위치에 배치했으므로)
+                robot.GetComponent<RobotController>()?.UpdateHeldItemReference();
             }
         }
     }
